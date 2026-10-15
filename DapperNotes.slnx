@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DapperNotes.Api/DapperNotes.Api.csproj" />
+  <Project Path="DapperNotes.Tests/DapperNotes.Tests.csproj" />
+</Solution>
