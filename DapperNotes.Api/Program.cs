@@ -28,16 +28,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-
-app.Use(async (context, next) =>
-{
-    var sw = System.Diagnostics.Stopwatch.StartNew();   // before
-
-    await next(context);                                 // pass it down the pipeline
-
-    sw.Stop();                                           // after: the response is ready
-    Console.WriteLine($"{context.Request.Method} {context.Request.Path} took {sw.ElapsedMilliseconds} ms");
-});
-
-
 app.Run();
