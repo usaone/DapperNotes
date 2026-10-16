@@ -12,6 +12,8 @@ builder.Services.AddSingleton<IDbConnectionFactory>(sp =>
         sp.GetRequiredService<IConfiguration>().GetConnectionString("Notes")
         ?? throw new InvalidOperationException("Missing 'Notes' connection string")));
 
+builder.Services.AddScoped<INotesRepository, NotesRepository>();
+
 var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services.GetRequiredService<IDbConnectionFactory>());
