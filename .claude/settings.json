@@ -1,0 +1,15 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "powershell -NoProfile -File \"$CLAUDE_PROJECT_DIR/.claude/test-on-cs-edit.ps1\""
+                    }
+                ]
+            }
+        ]
+    }
+}
