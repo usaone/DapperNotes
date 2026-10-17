@@ -79,3 +79,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Lets the test project name Program (top-level statements generate it as internal).
+public partial class Program;
