@@ -1,0 +1,29 @@
+name: CI
+
+on:
+    pull_request:
+        branches: [master]
+    push:
+        branches: [master]
+
+# The workflow only needs to read the repository.
+permissions:
+    contents: read
+
+# A newer push to the same branch or PR cancels the run still in progress.
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-dotnet@v4
+          with:
+              dotnet-version: '10.0.x'
+        - run: dotnet restore
+        - run: dotnet build --no-restore
+        - run: dotnet test --no-build --verbosity normal
