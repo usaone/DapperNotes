@@ -1,4 +1,5 @@
 using DapperNotes.Api.Data;
+using DapperNotes.Api.Middleware;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,11 @@ builder.Services.AddSingleton<IDbConnectionFactory>(sp =>
 
 builder.Services.AddScoped<INotesRepository, NotesRepository>();
 
+builder.Services.AddOptions<RequestTimingOptions>()
+    .Bind(builder.Configuration.GetSection(RequestTimingOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services.GetRequiredService<IDbConnectionFactory>());
@@ -25,6 +31,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "DapperNotes v1"));
 }
+
+app.UseMiddleware<RequestTimingMiddleware>();
 
 app.UseHttpsRedirection();
 
