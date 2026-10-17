@@ -22,6 +22,7 @@ await DatabaseInitializer.InitializeAsync(app.Services.GetRequiredService<IDbCon
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "DapperNotes v1"));
 }
 
 app.UseHttpsRedirection();
