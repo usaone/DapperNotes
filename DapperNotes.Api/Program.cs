@@ -1,5 +1,8 @@
 using DapperNotes.Api.Data;
 using DapperNotes.Api.Middleware;
+using DapperNotes.Api.Security;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +24,12 @@ builder.Services.AddOptions<RequestTimingOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.Configure<SwaggerAuthOptions>(builder.Configuration.GetSection(SwaggerAuthOptions.SectionName));
+builder.Services.AddAuthentication(SwaggerSecurity.Scheme)
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(SwaggerSecurity.Scheme, null);
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(SwaggerSecurity.Policy, policy => policy.RequireRole(SwaggerSecurity.Role));
+
 var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services.GetRequiredService<IDbConnectionFactory>());
@@ -28,13 +37,42 @@ await DatabaseInitializer.InitializeAsync(app.Services.GetRequiredService<IDbCon
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    // The spec is a normal endpoint, so it can require the policy directly.
+    app.MapOpenApi().RequireAuthorization(SwaggerSecurity.Policy);
+
+    // The UI is served as static files by middleware, which [Authorize] never sees,
+    // so this gate must run before UseSwaggerUI.
+    app.UseWhen(
+        context => context.Request.Path.StartsWithSegments(SwaggerSecurity.PathPrefix),
+        gate => gate.Use(async (context, next) =>
+        {
+            var authentication = await context.AuthenticateAsync(SwaggerSecurity.Scheme);
+            if (!authentication.Succeeded)
+            {
+                await context.ChallengeAsync(SwaggerSecurity.Scheme);
+                return;
+            }
+
+            var authorization = await context.RequestServices
+                .GetRequiredService<IAuthorizationService>()
+                .AuthorizeAsync(authentication.Principal!, SwaggerSecurity.Policy);
+            if (!authorization.Succeeded)
+            {
+                await context.ForbidAsync(SwaggerSecurity.Scheme);
+                return;
+            }
+
+            await next();
+        }));
+
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "DapperNotes v1"));
 }
 
 app.UseMiddleware<RequestTimingMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
