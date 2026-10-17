@@ -67,6 +67,67 @@ public class NotesRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetAllAsync_WhenEmpty_ReturnsEmptyList()
+    {
+        var notes = await _repository.GetAllAsync();
+
+        Assert.Empty(notes);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsAllNotesOrderedById()
+    {
+        var first = await _repository.CreateAsync(new CreateNoteRequest { Title = "A", Content = "a" });
+        var second = await _repository.CreateAsync(new CreateNoteRequest { Title = "B", Content = "b" });
+
+        var notes = await _repository.GetAllAsync();
+
+        Assert.Equal([first.Id, second.Id], notes.Select(n => n.Id));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ChangesOnlyTheTargetNote()
+    {
+        var target = await _repository.CreateAsync(new CreateNoteRequest { Title = "Target", Content = "t" });
+        var other = await _repository.CreateAsync(new CreateNoteRequest { Title = "Other", Content = "o" });
+
+        var updated = await _repository.UpdateAsync(target.Id, new UpdateNoteRequest { Title = "Changed", Content = "c" });
+
+        Assert.NotNull(updated);
+        Assert.Equal("Changed", updated.Title);
+        Assert.Equal(target.CreatedAt, updated.CreatedAt);
+        var untouched = await _repository.GetByIdAsync(other.Id);
+        Assert.Equal("Other", untouched?.Title);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenNoteMissing_ReturnsNull()
+    {
+        var updated = await _repository.UpdateAsync(9999, new UpdateNoteRequest { Title = "x", Content = "y" });
+
+        Assert.Null(updated);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesOnlyTheTargetNote()
+    {
+        var target = await _repository.CreateAsync(new CreateNoteRequest { Title = "Gone", Content = "g" });
+        var other = await _repository.CreateAsync(new CreateNoteRequest { Title = "Stays", Content = "s" });
+
+        var deleted = await _repository.DeleteAsync(target.Id);
+
+        Assert.True(deleted);
+        Assert.Null(await _repository.GetByIdAsync(target.Id));
+        Assert.NotNull(await _repository.GetByIdAsync(other.Id));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenNoteMissing_ReturnsFalse()
+    {
+        Assert.False(await _repository.DeleteAsync(9999));
+    }
+
+    [Fact]
     public async Task CreateAsync_CalledTwice_ReturnsIncreasingIds()
     {
         var first = await _repository.CreateAsync(new CreateNoteRequest { Title = "One", Content = "1" });
