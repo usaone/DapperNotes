@@ -1,0 +1,2 @@
+# Let git normalize line endings: LF in the repository, native endings in the working folder.
+* text=auto
