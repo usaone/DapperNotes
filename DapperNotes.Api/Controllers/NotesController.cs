@@ -16,6 +16,12 @@ namespace DapperNotes.Api.Controllers
             _notesRepository = notesRepository;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IReadOnlyList<NoteDto>>> GetAll()
+        {
+            return Ok(await _notesRepository.GetAllAsync());
+        }
+
         [HttpGet("{id:int}")]
         public async Task<ActionResult<NoteDto>> Get(int id)
         {
@@ -32,6 +38,28 @@ namespace DapperNotes.Api.Controllers
         {
             var note = await _notesRepository.CreateAsync(request);
             return CreatedAtAction(nameof(Get), new { id = note.Id }, note);
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<NoteDto>> Update(int id, UpdateNoteRequest request)
+        {
+            var note = await _notesRepository.UpdateAsync(id, request);
+            if (note == null)
+            {
+                return NotFound();
+            }
+            return Ok(note);
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _notesRepository.DeleteAsync(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
     }
 }
