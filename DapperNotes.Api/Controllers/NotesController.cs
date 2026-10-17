@@ -16,7 +16,7 @@ namespace DapperNotes.Api.Controllers
             _notesRepository = notesRepository;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<NoteDto>> Get(int id)
         {
             var note = await _notesRepository.GetByIdAsync(id);
