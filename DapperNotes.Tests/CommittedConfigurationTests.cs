@@ -8,7 +8,7 @@ namespace DapperNotes.Tests;
 // These tests read the file as committed, with no overrides.
 public class CommittedConfigurationTests
 {
-    private static SwaggerAuthOptions LoadSwaggerAuth()
+    private static IConfiguration LoadCommittedConfiguration()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null && !directory.GetFiles("DapperNotes.slnx").Any())
@@ -19,10 +19,25 @@ public class CommittedConfigurationTests
         Assert.NotNull(directory);
         var settingsPath = Path.Combine(directory.FullName, "DapperNotes.Api", "appsettings.json");
 
-        var configuration = new ConfigurationBuilder().AddJsonFile(settingsPath, optional: false).Build();
-        var options = configuration.GetSection(SwaggerAuthOptions.SectionName).Get<SwaggerAuthOptions>();
+        return new ConfigurationBuilder().AddJsonFile(settingsPath, optional: false).Build();
+    }
+
+    private static SwaggerAuthOptions LoadSwaggerAuth()
+    {
+        var options = LoadCommittedConfiguration()
+            .GetSection(SwaggerAuthOptions.SectionName)
+            .Get<SwaggerAuthOptions>();
         Assert.NotNull(options);
         return options;
+    }
+
+    [Fact]
+    public void AppSettings_ProvidesTheNotesConnectionString()
+    {
+        // Program.cs throws at startup when this key is missing, which no other test would notice.
+        var connectionString = LoadCommittedConfiguration().GetConnectionString("Notes");
+
+        Assert.False(string.IsNullOrWhiteSpace(connectionString));
     }
 
     [Fact]
