@@ -16,7 +16,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    build-and-test:
+    test:
         runs-on: ubuntu-latest
         timeout-minutes: 10
         steps:
