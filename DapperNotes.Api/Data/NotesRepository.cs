@@ -20,7 +20,6 @@ namespace DapperNotes.Api.Data
 
         private const string DeleteSql = """
             DELETE FROM Notes
-            WHERE Id = @Id;
             """;
 
         private const string GetByIdSql = """
